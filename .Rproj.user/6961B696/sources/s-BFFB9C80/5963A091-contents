@@ -1,4 +1,0 @@
-library(tidycensus)
-library(dplyr)
-
-v21 <- tidycensus::load_variables(2021, "acs5")
