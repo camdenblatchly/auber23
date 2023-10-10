@@ -1,0 +1,12 @@
+.Rproj.user
+.Renviron
+.Rhistory
+.Rprofile
+.idea
+.RData
+.Ruserdata
+*.Rproj
+*.html
+
+.DS_Store
+
