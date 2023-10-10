@@ -1,0 +1,8 @@
+"0",""
+"0","chrt_dta <- bb_co %>%"
+"0","  filter(STUSPS == ""CO"") %>%"
+"0","  # mutate(pct_25_3_loc = scales::percent(round(pct_25_3_loc, 2), scale = 100)) %>%"
+"0","  sf::st_as_sf() %>%"
+"0","  sf::st_transform(crs = sf::st_crs(3857))"
+"0",""
+"0",""

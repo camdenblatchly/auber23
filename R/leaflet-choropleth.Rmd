@@ -1,0 +1,69 @@
+---
+title: "leaflet-choropleth"
+output: html_document
+---
+
+```{r}
+
+library(dplyr)
+library(leaflet)
+
+here::i_am("R/leaflet-choropleth.Rmd")
+
+```
+
+
+```{r}
+
+# Set Leaflet options
+# leaflet(options = leafletOptions(minZoom = 0, maxZoom = 18))
+
+```
+
+
+```{r}
+
+# Get us data
+v21 <- tidycensus::load_variables(2021, "acs5")
+acs_vars <- c(
+  "male_85_plus" = "B01001_025"
+)
+
+male_85_plus <- tidycensus::get_acs(
+    "county", 
+    variables = acs_vars, 
+    summary_var = "B01001_001", 
+    year = 2021,
+    geometry = TRUE
+  ) %>%
+  mutate(
+    pct = estimate / summary_est
+  )
+  
+```
+
+
+
+```{r}
+
+library(viridis)
+
+map_dta <- male_85_plus %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs("+proj=longlat +datum=WGS84"))
+
+color_palette <- viridis(10)  # Adjust the number of colors as needed
+
+m = leaflet(map_dta) %>% 
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~colorNumeric(palette = c("#ffffff", "black"), domain = map_dta$pct)(pct),
+    color = ~colorNumeric(palette = c("#ffffff", "black"), domain = map_dta$pct)(pct),
+    fillOpacity = 0.5,
+    weight = .5
+  )
+
+m
+
+```
+
