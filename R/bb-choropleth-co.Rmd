@@ -1,0 +1,192 @@
+---
+title: "choropleth"
+output: html_document
+---
+
+```{r}
+
+library(dplyr)
+library(cori.charts)
+library(ggplot2)
+library(scales)
+library(classInt)
+
+library(sysfonts)
+library(showtext)
+
+sysfonts::font_add_google("Lato")
+font_add(
+  "TT Hoves",
+  regular = "TypeType - TT Hoves Regular.ttf",
+  bold = "TypeType - TT Hoves Bold.ttf",
+  italic = "TypeType - TT Hoves Italic.ttf",
+  bolditalic = "TypeType - TT Hoves Bold Italic.ttf"
+)
+showtext_auto()
+showtext_opts(dpi = 300)
+
+here::i_am("R/bb-choropleth-co.Rmd")
+source(here::here("R/utils.R"))
+
+```
+
+
+```{r}
+
+bb_co <- get_bb_co(geo = TRUE)
+
+
+```
+
+
+```{r}
+
+chrt_dta <- bb_co %>%
+  filter(STUSPS == "CO") %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+
+```
+
+
+```{r}
+
+breaks <- chrt_dta %>%
+  pull(pct_25_3_loc) %>%
+  classIntervals(
+    n = 5,
+    style = "jenks"
+  )
+
+chrt_labels <- list(
+    title = "Jenks",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+)
+
+fig_jenks <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+  theme(
+    legend.text = element_text(margin = margin(r = 10)),
+    legend.key.size = unit(12, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  guides(fill = guide_legend(nrow = 1))
+
+save_plot(fig_jenks, here::here("export/choropleth_jenks_co_bb.png"), chart_height = 8)
+
+```
+
+```{r}
+
+breaks <- chrt_dta %>%
+  pull(pct_25_3_loc) %>%
+  classIntervals(
+    n = 5,
+    style = "equal"
+  )
+
+chrt_labels <- list(
+    title = "Equal",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+)
+
+fig_equal <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+  theme(
+    legend.text = element_text(margin = margin(r = 10)),
+    legend.key.size = unit(12, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  guides(fill = guide_legend(nrow = 1))
+
+save_plot(fig_equal, here::here("export/choropleth_equal_co_bb_bb.png"), chart_height = 8)
+
+```
+
+```{r}
+
+breaks <- chrt_dta %>%
+  pull(pct_25_3_loc) %>%
+  classIntervals(
+    n = 5,
+    style = "quantile"
+  )
+
+chrt_labels <- list(
+    title = "Quantile",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+)
+
+fig_quantile <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+  theme(
+    legend.text = element_text(margin = margin(r = 10)),
+    legend.key.size = unit(12, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  guides(fill = guide_legend(nrow = 1))
+
+save_plot(fig_quantile, here::here("export/choropleth_quantile_co_bb.png"), chart_height = 8)
+
+```
+
+```{r}
+
+breaks <- chrt_dta %>%
+  pull(pct_25_3_loc) %>%
+  classIntervals(
+    n = 5,
+    style = "sd"
+  )
+
+chrt_labels <- list(
+    title = "Standard deviation",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+)
+
+fig_sd <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+  theme(
+    legend.text = element_text(margin = margin(r = 10)),
+    legend.key.size = unit(12, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  guides(fill = guide_legend(nrow = 1))
+
+save_plot(fig_sd, here::here("export/choropleth_sd_co_bb.png"), chart_height = 8)
+
+```
+
+
+```{r}
+
+# Create a histogram
+fig_dist <- ggplot(chrt_dta, aes(x = pct_25_3_loc)) +
+  geom_histogram(binwidth = .05, fill = "#00835D", color = "black") +
+  scale_x_continuous(
+    labels = percent_format(scale = 100),
+    expand = expansion(mult = c(0, 0))
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0))
+  ) +
+  labs(
+    title = "25/3 broadband access distribution",
+    subtitle = "For Colorado counties",
+    x = NULL,
+    y = NULL,
+    caption = "Source: 2022 FCC estimates"
+  ) + 
+  theme_cori() +
+  theme(
+    panel.grid.major.y = element_line(color = "#d0d2ce", linetype = "solid", linewidth = .25)
+  )
+  
+save_plot(fig_dist, here::here("export/bb_25_3_hist_bb.png"))
+
+```
+
+
+
+
+

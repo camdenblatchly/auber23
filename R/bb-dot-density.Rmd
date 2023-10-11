@@ -1,0 +1,97 @@
+---
+title: "bb-dot-density"
+output: html_document
+---
+
+
+```{r}
+
+library(dplyr)
+library(cori.charts)
+library(ggplot2)
+library(scales)
+library(classInt)
+library(ggmap)
+library(sf)
+
+library(sysfonts)
+library(showtext)
+
+sysfonts::font_add_google("Lato")
+font_add(
+  "TT Hoves",
+  regular = "TypeType - TT Hoves Regular.ttf",
+  bold = "TypeType - TT Hoves Bold.ttf",
+  italic = "TypeType - TT Hoves Italic.ttf",
+  bolditalic = "TypeType - TT Hoves Bold Italic.ttf"
+)
+showtext_auto()
+showtext_opts(dpi = 300)
+
+here::i_am("R/bb-dot-density.Rmd")
+source(here::here("R/utils.R"))
+
+```
+
+
+```{r}
+
+bb_tr <- get_bb_tr(geo = TRUE, st = "08")
+
+```
+
+
+```{r}
+
+tracts <- tigris::tracts(state = "08", cb = TRUE, year = 2021) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+
+unserved_dots <- bb_tr %>%
+  mutate(
+    cnt_unserved = cnt_total_locations - cnt_25_3
+  ) %>%
+  filter(!is.na(cnt_unserved)) %>%
+  filter(cnt_unserved > 0) %>%
+  sf::st_as_sf() %>%
+  tidycensus::as_dot_density(
+    "cnt_unserved",
+    100
+  ) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+
+```
+
+```{r}
+
+loc_25_3_dots <- bb_tr %>%
+  filter(!is.na(cnt_25_3)) %>%
+  filter(cnt_25_3 > 0) %>%
+  sf::st_as_sf() %>%
+  tidycensus::as_dot_density(
+    "cnt_25_3",
+    100
+  ) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+
+```
+
+
+```{r}
+
+fig <- ggplot() +
+  geom_sf(data = tracts, linewidth = .05, fill = "#FBF8E9", color = "dimgray") +
+  # geom_sf(data = loc_25_3_dots, color = "#259299", size = .01, alpha = .1) +
+  geom_sf(data = unserved_dots, color = "#BA3333", size = .5, alpha = .7) + 
+  theme_cori_map() +
+  labs(
+    title = "Unserved locations",
+    subtitle = "One dot equals 100 broadband serviceable locations",
+    caption = "Source: 2022 FCC estimates"
+  ) 
+
+save_plot(fig, here::here("export/bb_dot_density_tract.png"), chart_height = 7.5)
+
+```

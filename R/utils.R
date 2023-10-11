@@ -68,12 +68,12 @@ formatCutLabels <- function(breaks) {
 }
 
 
-get_choropleth <- function(dta, breaks, chrt_labels, outline_width = 0.1) {
+get_choropleth <- function(dta, breaks, chrt_labels, outline_width = 0.1, value_col = "pct_25_3_loc") {
   
   fig <- dta %>%
     mutate(
       fill_var = cut(
-        pct_25_3_loc,
+        !!as.name(value_col),
         breaks$brks,
         labels = formatCutLabels(breaks$brks),
         include.lowest = TRUE

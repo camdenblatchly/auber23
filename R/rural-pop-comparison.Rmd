@@ -1,0 +1,195 @@
+---
+title: "rural-pop-comparison"
+output: html_document
+---
+
+```{r}
+
+library(dplyr)
+library(cori.charts)
+library(ggplot2)
+library(scales)
+library(classInt)
+library(cartogram)
+library(coriverse)
+
+library(sysfonts)
+library(showtext)
+
+sysfonts::font_add_google("Lato")
+font_add(
+  "TT Hoves",
+  regular = "TypeType - TT Hoves Regular.ttf",
+  bold = "TypeType - TT Hoves Bold.ttf",
+  italic = "TypeType - TT Hoves Italic.ttf",
+  bolditalic = "TypeType - TT Hoves Bold Italic.ttf"
+)
+showtext_auto()
+showtext_opts(dpi = 300)
+
+here::i_am("R/rural-pop-comparison.Rmd")
+source(here::here("R/utils.R"))
+
+```
+
+
+```{r}
+
+# v21 <- tidycensus::load_variables(2021, "acs5")
+
+acs_dta <- tidycensus::get_acs(
+  "county",
+  variables = "B01003_001",
+  geometry = FALSE
+)
+
+```
+
+
+```{r}
+
+con <- connect_to_db("core_data")
+def <- read_db(con, "rural_definitions_county_2020")
+
+chrt_dta <- left_join(
+    acs_dta,
+    def,
+    by = c("GEOID" = "geoid")
+  ) %>%
+  mutate(
+    geoid_st = stringr::str_sub(GEOID, 1, 2),
+    rural_pop = rural_cbsa_2019_flag * estimate
+  ) %>%
+  group_by(geoid_st) %>%
+  summarise(
+    rural_pop = sum(rural_pop, na.rm = TRUE),
+    tot_pop = sum(estimate, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    pct_rural = rural_pop / tot_pop
+  ) %>%
+  left_join(
+    .,
+    tigris::states(cb = TRUE, year = 2021),
+    by = c("geoid_st" = "GEOID")
+  ) %>%
+  filter(STATEFP <= "56") %>%
+  filter(!STATEFP %in% c("02", "15")) %>%
+  sf::st_as_sf()
+
+```
+
+
+```{r}
+
+fig <- chrt_dta %>%
+  sf::st_transform(crs = 5070) %>%
+  ggplot() +
+  geom_sf(aes(fill = pct_rural), color = "#d0d2ce", linewidth = .05) +
+  scale_fill_gradient2(
+    low = "#f7fbff", high = "#08306b", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100)
+  ) +
+  theme_cori_map() +
+  theme(
+    legend.key.width = unit(30, "pt"),
+    legend.margin = margin(t = 5)
+  ) + 
+  labs(
+    title = "Percent rural by state",
+    subtitle = "Choropleth",
+    caption = "Source: 2021 ACS 5-year estimates"
+  )
+
+save_plot(fig, here::here("export/choropleth_pct_rural_pop.png"), chart_height = 7.2)
+
+```
+
+
+```{r}
+
+fig2 <- chrt_dta %>%
+  sf::st_transform(crs = 5070) %>%
+  ggplot() +
+  geom_sf(aes(fill = rural_pop), color = "#d0d2ce", linewidth = .05) +
+  scale_fill_gradient2(
+    low = "#f7fbff", high = "#08306b", na.value = "#d0d2ce",
+    labels = scales::number_format(scale = 1, scale_cut = scales::cut_short_scale())
+  ) +
+  theme_cori_map() +
+  theme(
+    legend.key.width = unit(30, "pt"),
+    legend.margin = margin(t = 5)
+  ) + 
+  labs(
+    title = "Rural population by state",
+    subtitle = "Choropleth",
+    caption = "Source: 2021 ACS 5-year estimates"
+  )
+
+save_plot(fig2, here::here("export/choropleth_rural_pop.png"), chart_height = 7.2)
+
+
+```
+
+
+```{r}
+
+chrt_dta_carto <- chrt_dta %>%
+  sf::st_transform(crs = 5070) %>%
+  cartogram_cont("tot_pop", itermax = 5)
+
+fig3 <- chrt_dta_carto %>%
+  ggplot() +
+  geom_sf(aes(fill = pct_rural), color = "#d0d2ce", linewidth = 0.1) +
+  scale_fill_gradient2(
+    low = "#f7fbff", high = "#08306b", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100)
+  ) +
+  theme_cori_map() +
+  theme(
+    legend.key.width = unit(30, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  labs(
+    title = "Percent rural by state",
+    subtitle = "Cartogram, sized by total state population",
+    caption = "Source: 2021 ACS 5-year estimates"
+  )
+
+save_plot(fig3, here::here("export/cartogram_rural_pop.png"), chart_height = 7.2)
+
+
+```
+
+```{r}
+
+chrt_dta_carto <- chrt_dta %>%
+  sf::st_transform(crs = 5070) %>%
+  cartogram_ncont(weight = "rural_pop", k = 0.3, inplace = FALSE)
+
+fig4 <- chrt_dta_carto %>%
+  ggplot() +
+  geom_sf(aes(fill = rural_pop), color = "#d0d2ce", linewidth = 0.1) +
+  scale_fill_gradient2(
+    low = "#f7fbff", high = "#08306b", na.value = "#d0d2ce",
+    labels = scales::number_format(scale = 1, scale_cut = scales::cut_short_scale())
+  ) +
+  theme_cori_map() +
+  theme(
+    legend.key.width = unit(30, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  labs(
+    title = "Rural population by state",
+    subtitle = "Non-contiguous cartogram, sized by state rural population",
+    caption = "Source: 2021 ACS 5-year estimates"
+  )
+
+save_plot(fig4, here::here("export/cartogram_ncont_rural_pop.png"), chart_height = 7.2)
+
+
+```
+
+

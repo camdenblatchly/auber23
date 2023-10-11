@@ -1,5 +1,5 @@
 ---
-title: "continuous"
+title: "bb-cartogram-tract"
 output: html_document
 ---
 
@@ -10,6 +10,7 @@ library(cori.charts)
 library(ggplot2)
 library(scales)
 library(classInt)
+library(cartogram)
 
 library(sysfonts)
 library(showtext)
@@ -25,30 +26,27 @@ font_add(
 showtext_auto()
 showtext_opts(dpi = 300)
 
-here::i_am("R/continuous.Rmd")
+here::i_am("R/bb-cartogram-tract.Rmd")
 source(here::here("R/utils.R"))
 
 ```
 
-
 ```{r}
 
-bb_tr <- get_bb_tr(geo = TRUE, st = "08")
+bb_co <- get_bb_co(geo = TRUE) %>%
+  filter(!is.na(cnt_25_3_loc)) %>%
+  filter(STATEFP == "08") %>%
+  sf::st_as_sf()
+
+# construct cartogram
+bb_co_cart <- cartogram_cont(bb_co, "cnt_25_3_loc", itermax = 5)
 
 ```
 
 
 ```{r}
 
-chrt_dta <- bb_tr %>%
-  sf::st_as_sf() %>%
-  sf::st_transform(crs = sf::st_crs(3857))
-
-```
-
-```{r}
-
-fig <- chrt_dta %>%
+fig <- bb_co_cart %>%
   ggplot() +
   geom_sf(aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
   scale_fill_gradient2(
@@ -61,11 +59,13 @@ fig <- chrt_dta %>%
     legend.margin = margin(t = 5)
   ) +
   labs(
-    title = "Continuous",
+    title = "Cartogram",
     subtitle = "Percent of locations with 25/3 broadband service",
     caption = "Source: 2022 FCC estimates"
   )
 
-save_plot(fig, here::here("export/choropleth_continuous_tr_bb.png"), chart_height = 8)
+fig
 
 ```
+
+

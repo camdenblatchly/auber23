@@ -1,5 +1,5 @@
 ---
-title: "choropleth"
+title: "cm-choropleth-tr"
 output: html_document
 ---
 
@@ -25,7 +25,7 @@ font_add(
 showtext_auto()
 showtext_opts(dpi = 300)
 
-here::i_am("R/choropleth.Rmd")
+here::i_am("R/cm-choropleth-tract.Rmd")
 source(here::here("R/utils.R"))
 
 ```
@@ -33,18 +33,29 @@ source(here::here("R/utils.R"))
 
 ```{r}
 
-bb_co <- get_bb_co(geo = TRUE)
+# sum_var = "C24010_001"
+acs_vars <- c(
+  "cm_jobs" = "C24010_008",
+  "cm_jobs" = "C24010_044"
+)
 
-
-```
-
-
-```{r}
-
-chrt_dta <- bb_co %>%
-  filter(STUSPS == "CO") %>%
+chrt_dta <- tidycensus::get_acs(
+    "tract",
+    variables = acs_vars,
+    state = "08", # Colorado
+    geometry = TRUE,
+    summary_var = "C24010_001"
+  ) %>%
+  group_by(GEOID, geometry, NAME, summary_est) %>%
+  summarise(
+    cm_jobs = sum(estimate, na.rm = TRUE)
+  ) %>%
+  mutate(
+    pct_cm = cm_jobs / summary_est
+  ) %>%
   sf::st_as_sf() %>%
   sf::st_transform(crs = sf::st_crs(3857))
+  
 
 ```
 
@@ -52,7 +63,7 @@ chrt_dta <- bb_co %>%
 ```{r}
 
 breaks <- chrt_dta %>%
-  pull(pct_25_3_loc) %>%
+  pull(pct_cm) %>%
   classIntervals(
     n = 5,
     style = "jenks"
@@ -60,11 +71,11 @@ breaks <- chrt_dta %>%
 
 chrt_labels <- list(
     title = "Jenks",
-    subtitle = "Percent of locations with 25/3 broadband service",
-    caption = "Source: 2022 FCC estimates"
+    subtitle = "Share of employment in computer and math occupations",
+    caption = "Source: 2021 ACS 5-year estimates"
 )
 
-fig_jenks <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+fig_jenks <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm", outline_width = .01) +
   theme(
     legend.text = element_text(margin = margin(r = 10)),
     legend.key.size = unit(12, "pt"),
@@ -72,14 +83,14 @@ fig_jenks <- get_choropleth(chrt_dta, breaks, chrt_labels) +
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_jenks, here::here("export/choropleth_jenks_co.png"), chart_height = 8)
+save_plot(fig_jenks, here::here("export/choropleth_jenks_tr_cm_jobs.png"), chart_height = 8)
 
 ```
 
 ```{r}
 
 breaks <- chrt_dta %>%
-  pull(pct_25_3_loc) %>%
+  pull(pct_cm) %>%
   classIntervals(
     n = 5,
     style = "equal"
@@ -87,11 +98,11 @@ breaks <- chrt_dta %>%
 
 chrt_labels <- list(
     title = "Equal",
-    subtitle = "Percent of locations with 25/3 broadband service",
-    caption = "Source: 2022 FCC estimates"
+    subtitle = "Share of employment in computer and math occupations",
+    caption = "Source: 2021 ACS 5-year estimates"
 )
 
-fig_equal <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+fig_equal <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm", outline_width = .01) +
   theme(
     legend.text = element_text(margin = margin(r = 10)),
     legend.key.size = unit(12, "pt"),
@@ -99,14 +110,14 @@ fig_equal <- get_choropleth(chrt_dta, breaks, chrt_labels) +
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_equal, here::here("export/choropleth_equal_co.png"), chart_height = 8)
+save_plot(fig_equal, here::here("export/choropleth_equal_tr_cm_jobs.png"), chart_height = 8)
 
 ```
 
 ```{r}
 
 breaks <- chrt_dta %>%
-  pull(pct_25_3_loc) %>%
+  pull(pct_cm) %>%
   classIntervals(
     n = 5,
     style = "quantile"
@@ -114,11 +125,11 @@ breaks <- chrt_dta %>%
 
 chrt_labels <- list(
     title = "Quantile",
-    subtitle = "Percent of locations with 25/3 broadband service",
-    caption = "Source: 2022 FCC estimates"
+    subtitle = "Share of employment in computer and math occupations",
+    caption = "Source: 2021 ACS 5-year estimates"
 )
 
-fig_quantile <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+fig_quantile <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm", outline_width = .01) +
   theme(
     legend.text = element_text(margin = margin(r = 10)),
     legend.key.size = unit(12, "pt"),
@@ -126,26 +137,26 @@ fig_quantile <- get_choropleth(chrt_dta, breaks, chrt_labels) +
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_quantile, here::here("export/choropleth_quantile_co.png"), chart_height = 8)
+save_plot(fig_quantile, here::here("export/choropleth_quantile_tr_cm_jobs.png"), chart_height = 8)
 
 ```
 
 ```{r}
 
 breaks <- chrt_dta %>%
-  pull(pct_25_3_loc) %>%
+  pull(pct_cm) %>%
   classIntervals(
-    n = 5,
+    n = 4,
     style = "sd"
   )
 
 chrt_labels <- list(
     title = "Standard deviation",
-    subtitle = "Percent of locations with 25/3 broadband service",
-    caption = "Source: 2022 FCC estimates"
+    subtitle = "Share of employment in computer and math occupations",
+    caption = "Source: 2021 ACS 5-year estimates"
 )
 
-fig_sd <- get_choropleth(chrt_dta, breaks, chrt_labels) +
+fig_sd <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm", outline_width = .01) +
   theme(
     legend.text = element_text(margin = margin(r = 10)),
     legend.key.size = unit(12, "pt"),
@@ -153,7 +164,7 @@ fig_sd <- get_choropleth(chrt_dta, breaks, chrt_labels) +
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_sd, here::here("export/choropleth_sd_co.png"), chart_height = 8)
+save_plot(fig_sd, here::here("export/choropleth_sd_tr_cm_jobs.png"), chart_height = 8)
 
 ```
 
@@ -161,8 +172,8 @@ save_plot(fig_sd, here::here("export/choropleth_sd_co.png"), chart_height = 8)
 ```{r}
 
 # Create a histogram
-fig_dist <- ggplot(chrt_dta, aes(x = pct_25_3_loc)) +
-  geom_histogram(binwidth = .05, fill = "#00835D", color = "black") +
+fig_dist <- ggplot(chrt_dta, aes(x = pct_cm)) +
+  geom_histogram(binwidth = .01, fill = "#00835D", color = "black") +
   scale_x_continuous(
     labels = percent_format(scale = 100),
     expand = expansion(mult = c(0, 0))
@@ -171,22 +182,18 @@ fig_dist <- ggplot(chrt_dta, aes(x = pct_25_3_loc)) +
     expand = expansion(mult = c(0, 0))
   ) +
   labs(
-    title = "25/3 broadband access distribution",
-    subtitle = "For Colorado counties",
+    title = "Computer and math employment distribution",
+    subtitle = "For Colorado tracts",
     x = NULL,
     y = NULL,
-    caption = "Source: 2022 FCC estimates"
+    caption = "Source: 2021 ACS 5-year estimates"
   ) + 
   theme_cori() +
   theme(
     panel.grid.major.y = element_line(color = "#d0d2ce", linetype = "solid", linewidth = .25)
   )
   
-save_plot(fig_dist, here::here("export/bb_25_3_hist.png"))
+save_plot(fig_dist, here::here("export/hist_cm_jobs_tr.png"))
 
 ```
-
-
-
-
 
