@@ -1,0 +1,94 @@
+---
+title: "cm-choropleth-co-continuous"
+output: html_document
+---
+
+```{r}
+
+library(dplyr)
+library(cori.charts)
+library(ggplot2)
+library(scales)
+library(classInt)
+
+library(sysfonts)
+library(showtext)
+
+sysfonts::font_add_google("Lato")
+font_add(
+  "TT Hoves",
+  regular = "TypeType - TT Hoves Regular.ttf",
+  bold = "TypeType - TT Hoves Bold.ttf",
+  italic = "TypeType - TT Hoves Italic.ttf",
+  bolditalic = "TypeType - TT Hoves Bold Italic.ttf"
+)
+showtext_auto()
+showtext_opts(dpi = 300)
+
+here::i_am("R/cm-choropleth-co-continuous.Rmd")
+source(here::here("R/utils.R"))
+
+```
+
+
+```{r}
+
+# sum_var = "C24010_001"
+acs_vars <- c(
+  "cm_jobs" = "C24010_008",
+  "cm_jobs" = "C24010_044"
+)
+
+chrt_dta <- tidycensus::get_acs(
+    "county",
+    variables = acs_vars,
+    state = "08", # Colorado
+    geometry = TRUE,
+    summary_var = "C24010_001"
+  ) %>%
+  group_by(GEOID, geometry, NAME, summary_est) %>%
+  summarise(
+    cm_jobs = sum(estimate, na.rm = TRUE)
+  ) %>%
+  mutate(
+    pct_cm = cm_jobs / summary_est
+  ) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+  
+
+```
+
+
+```{r}
+
+fig <- chrt_dta %>%
+  ggplot() +
+  geom_sf(aes(fill = pct_cm), color = "#d0d2ce", linewidth = 0.1) +
+  scale_fill_gradient2(
+    low = "#f7fbff", mid = "#6baed6", midpoint = 0.04, high = "#08306b", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100)
+  ) +
+  theme_cori_map_presentation() +
+  theme(
+    legend.key.width = unit(60, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  labs(
+    title = "Continuous",
+    subtitle = "Share of employment in computer and math occupations",
+    caption = "Source: 2021 ACS 5-year estimates"
+  )
+
+save_plot(fig, here::here("export/choropleth_continuous_co_cm_jobs.png"), chart_height = 8.4)
+
+fig_sample <- fig +
+  labs(
+    title = "Colorado computer and math\noccupation concentration",
+    subtitle = "Share of employment in computer and math occupations",
+    caption = "Source: 2021 ACS 5-year estimates"
+  )
+
+save_plot(fig_sample, here::here("export/sample_choropleth.png"), chart_height = 9.1)
+
+```

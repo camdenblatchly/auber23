@@ -60,7 +60,13 @@ formatCutLabels <- function(breaks) {
   
   labels <- c()
   for (i in 2:length(breaks)) {
-    new_entry <- paste0("(", scales::percent(breaks[i-1]), ", ", scales::percent(breaks[i]), "]")
+    new_entry <- paste0(
+      "(", 
+      scales::percent(breaks[i-1], accuracy = .1), 
+      ", ", 
+      scales::percent(breaks[i], accuracy = .1), 
+      "]"
+    )
     labels <- c(labels, new_entry)
   }
   
@@ -84,7 +90,7 @@ get_choropleth <- function(dta, breaks, chrt_labels, outline_width = 0.1, value_
     geom_sf(aes(fill = fill_var), color = "#d0d2ce", linewidth = outline_width) +
     scale_fill_brewer(na.value = "#d0d2ce") + 
     # scale_color_brewer(na.value = "#d0d2ce") +
-    theme_cori_map()
+    theme_cori_map_presentation()
   
   fig <- fig + do.call(ggplot2::labs, chrt_labels)
 

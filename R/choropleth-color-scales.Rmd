@@ -1,0 +1,211 @@
+---
+title: "choropleth-color-scales"
+output: html_document
+---
+
+
+```{r}
+
+library(dplyr)
+library(cori.charts)
+library(ggplot2)
+library(scales)
+library(coriverse)
+library(classInt)
+
+library(sysfonts)
+library(showtext)
+
+sysfonts::font_add_google("Lato")
+font_add(
+  "TT Hoves",
+  regular = "TypeType - TT Hoves Regular.ttf",
+  bold = "TypeType - TT Hoves Bold.ttf",
+  italic = "TypeType - TT Hoves Italic.ttf",
+  bolditalic = "TypeType - TT Hoves Bold Italic.ttf"
+)
+showtext_auto()
+showtext_opts(dpi = 300)
+
+here::i_am("R/choropleth-color-scales.Rmd")
+source(here::here("R/utils.R"))
+
+```
+
+
+```{r}
+
+bb_co <- get_bb_co(geo = TRUE)
+
+```
+
+```{r}
+
+rural_def <- readr::read_csv(here::here("data/cori_rural_definition.csv")) %>%
+  select(geoid_co, rural_cbsa_2019_flag) %>%
+  distinct()
+
+chrt_dta <- left_join(
+    bb_co,
+    rural_def,
+    by = "geoid_co"
+  ) %>%
+  mutate(
+    `Rurality` = ifelse(rural_cbsa_2019_flag == 0, "Nonrural", "Rural")
+  ) %>%
+  filter(STATEFP == "08") %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+
+
+```
+
+
+```{r}
+
+rural_dta <- chrt_dta %>%
+  filter(rural_cbsa_2019_flag == 1)
+
+nonrural_dta <- chrt_dta %>%
+  filter(rural_cbsa_2019_flag == 0)
+
+# Bad map example
+fig <- ggplot() +
+  geom_sf(data = rural_dta, aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
+  scale_fill_gradient2(
+    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100),
+    name = "Rural",
+    limits = c(0, 1)
+  ) +
+  ggnewscale::new_scale("fill") +
+  geom_sf(data = nonrural_dta, aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
+    scale_fill_gradient2(
+    low = "#F2FBEC", mid = "#65ACA5", midpoint = 0.5, high = "#061E46", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100),
+    name = "Nonrural",
+    limits = c(0, 1)
+  ) +
+  theme_cori_map_presentation() +
+  theme(
+    legend.key.width = unit(60, "pt"),
+    legend.margin = margin(t = 5),
+    legend.box = "vertical",
+    legend.box.just = "right",
+    legend.title = element_text(
+      family = "Lato", color = "black", size = 16,
+      margin = margin(r = 30),
+      hjust = 1
+    )
+  ) +
+  labs(
+    title = "Avoid using two color scales\nin the same chart",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+  )
+
+save_plot(fig, here::here("export/choropleth-bad-two-scales.png"), chart_height = 9.9)
+
+```
+
+
+```{r}
+
+rurality_dta <- chrt_dta %>%
+    mutate(
+    `Rurality` = ifelse(rural_cbsa_2019_flag == 0, "Nonrural", "Rural")
+  )
+  
+rurality_dta$Rurality <- factor(rurality_dta$Rurality, levels = c("Rural", "Nonrural"))
+
+# Good map example
+fig <- rurality_dta %>%
+  ggplot() +
+  geom_sf(data = chrt_dta, fill = "#d0d2ce", color = "#d0d2ce", linewidth = 0.01) +
+  geom_sf(aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
+  scale_fill_gradient2(
+    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100),
+    limits = c(0, 1)
+  ) +
+  theme_cori_map_presentation() +
+  theme(
+    legend.key.width = unit(60, "pt"),
+    legend.margin = margin(t = 5),
+    strip.text = element_text(family = "Lato", color = 'black', size = 16)
+  ) +
+  labs(
+    title = "Use facets to compare rural and nonrural",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+  ) +
+  facet_wrap(~Rurality, ncol = 2)
+
+save_plot(fig, here::here("export/choropleth-good-facet.png"), chart_height = 7.2, chart_width = 12)
+
+```
+
+
+```{r}
+
+# Good diverging color example
+fig <- chrt_dta %>%
+  ggplot() +
+  geom_sf(data = chrt_dta, fill = "#d0d2ce", color = "#d0d2ce", linewidth = 0.01) +
+  geom_sf(aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
+  scale_fill_gradient2(
+    low = "#E74F2A", mid = "#FBF8E9", midpoint = mean(chrt_dta$pct_25_3_loc, na.rm = TRUE), high = "#00835D", na.value = "#d0d2ce",
+    # labels = scales::percent_format(scale = 100),
+    limits = c(0, 1),
+    breaks = c(0, mean(chrt_dta$pct_25_3_loc, na.rm = TRUE), 1),
+    labels = c("0%", "Average", "100%")
+  ) +
+  theme_cori_map_presentation() +
+  theme(
+    legend.key.width = unit(60, "pt"),
+    legend.margin = margin(t = 5),
+    # strip.text = element_text(family = "Lato", color = 'black', size = 16)
+  ) +
+  labs(
+    title = "Diverging scale using an average",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+  )
+
+save_plot(fig, here::here("export/choropleth-good-diverging.png"), chart_height = 8.8)
+
+
+```
+
+
+
+```{r}
+
+# How to display rural
+fig <- ggplot() +
+  geom_sf(data = nonrural_dta, aes(fill = `Rurality`), color = "#d0d2ce", linewidth = 0.01) +
+  scale_fill_manual(
+    values = c("Nonrural" = "#d0d2ce")
+  ) +
+  ggnewscale::new_scale("fill") +
+  geom_sf(data = rural_dta, aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
+  scale_fill_gradient2(
+    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
+    labels = scales::percent_format(scale = 100),
+    limits = c(0, 1)
+  ) +
+  theme_cori_map_presentation() +
+  theme(
+    legend.key.width = unit(40, "pt"),
+    legend.margin = margin(t = 5),
+    legend.box = "vertical"
+  ) +
+  labs(
+    title = "Label nonrural",
+    subtitle = "Percent of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+  )
+
+save_plot(fig, here::here("export/choropleth-rural-mask.png"), chart_height = 9.1)
+
+```

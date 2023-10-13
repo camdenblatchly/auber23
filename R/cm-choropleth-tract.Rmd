@@ -83,7 +83,7 @@ fig_jenks <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm",
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_jenks, here::here("export/choropleth_jenks_tr_cm_jobs.png"), chart_height = 8)
+save_plot(fig_jenks, here::here("export/choropleth_jenks_tr_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -110,7 +110,7 @@ fig_equal <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm",
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_equal, here::here("export/choropleth_equal_tr_cm_jobs.png"), chart_height = 8)
+save_plot(fig_equal, here::here("export/choropleth_equal_tr_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -137,7 +137,7 @@ fig_quantile <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_c
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_quantile, here::here("export/choropleth_quantile_tr_cm_jobs.png"), chart_height = 8)
+save_plot(fig_quantile, here::here("export/choropleth_quantile_tr_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -164,7 +164,7 @@ fig_sd <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm", ou
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_sd, here::here("export/choropleth_sd_tr_cm_jobs.png"), chart_height = 8)
+save_plot(fig_sd, here::here("export/choropleth_sd_tr_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -188,7 +188,7 @@ fig_dist <- ggplot(chrt_dta, aes(x = pct_cm)) +
     y = NULL,
     caption = "Source: 2021 ACS 5-year estimates"
   ) + 
-  theme_cori() +
+  theme_cori_presentation() +
   theme(
     panel.grid.major.y = element_line(color = "#d0d2ce", linetype = "solid", linewidth = .25)
   )

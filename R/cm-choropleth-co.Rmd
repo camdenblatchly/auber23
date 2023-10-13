@@ -77,13 +77,69 @@ chrt_labels <- list(
 
 fig_jenks <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm") +
   theme(
-    legend.text = element_text(margin = margin(r = 10)),
-    legend.key.size = unit(12, "pt"),
+    legend.key = element_rect(color = "dimgray", linewidth = 1),
+    legend.text = element_text(margin = margin(r = 8)),
     legend.margin = margin(t = 5)
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_jenks, here::here("export/choropleth_jenks_co_cm_jobs.png"), chart_height = 8)
+save_plot(fig_jenks, here::here("export/choropleth_jenks_co_cm_jobs.png"), chart_height = 8.4)
+
+```
+
+
+```{r}
+
+# Make a distribution chart for Jenks
+
+scale_dta <- chrt_dta %>%
+  mutate(
+    fill_var = cut(
+      pct_cm,
+      breaks$brks,
+      labels = formatCutLabels(breaks$brks),
+      include.lowest = TRUE
+    )
+  ) %>%
+  sf::st_drop_geometry() %>%
+  group_by(fill_var) %>%
+  summarise(
+    count = n()
+  )
+
+fig_jenks_dist <- ggplot(scale_dta, aes(x = fill_var, y = count, fill = fill_var)) +
+  geom_col() +
+ geom_text(
+    aes(label = scales::number(count, accuracy = 1)),
+    fontface = "bold",
+    vjust = -.4,
+    family = "Lato",
+    size = 6
+  ) +
+  scale_x_discrete(
+    expand = expansion(mult = c(0, 0))
+  ) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.1))
+  ) +
+  scale_fill_brewer(na.value = "#d0d2ce") + 
+  labs(
+    title = NULL,
+    subtitle = NULL,
+    x = NULL,
+    y = NULL,
+    caption = NULL
+  ) +
+  theme_cori_presentation() +
+  theme(
+    legend.position = "none",
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank(),
+    axis.text.x = element_text(margin = margin(t = 4)),
+    panel.grid.major.y = element_line(color = "#d0d2ce", linetype = "solid", linewidth = .25)
+  )
+
+save_plot(fig_jenks_dist, here::here("export/jenks_dist_cm_jobs_co.png"), add_logo = FALSE, chart_height = 4)
 
 ```
 
@@ -104,13 +160,13 @@ chrt_labels <- list(
 
 fig_equal <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm") +
   theme(
-    legend.text = element_text(margin = margin(r = 10)),
-    legend.key.size = unit(12, "pt"),
+    legend.key = element_rect(color = "dimgray", linewidth = 1),
+    legend.text = element_text(margin = margin(r = 8)),
     legend.margin = margin(t = 5)
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_equal, here::here("export/choropleth_equal_co_cm_jobs.png"), chart_height = 8)
+save_plot(fig_equal, here::here("export/choropleth_equal_co_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -131,13 +187,13 @@ chrt_labels <- list(
 
 fig_quantile <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm") +
   theme(
-    legend.text = element_text(margin = margin(r = 10)),
-    legend.key.size = unit(12, "pt"),
+    legend.key = element_rect(color = "dimgray", linewidth = 1),
+    legend.text = element_text(margin = margin(r = 8)),
     legend.margin = margin(t = 5)
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_quantile, here::here("export/choropleth_quantile_co_cm_jobs.png"), chart_height = 8)
+save_plot(fig_quantile, here::here("export/choropleth_quantile_co_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -158,16 +214,13 @@ chrt_labels <- list(
 
 fig_sd <- get_choropleth(chrt_dta, breaks, chrt_labels, value_col = "pct_cm") +
   theme(
-    legend.key.size = unit(14, "pt"),
     legend.key = element_rect(color = "dimgray", linewidth = 1),
-    legend.margin = margin(t = 5),
-    plot.title = element_text(size = 32),
-    plot.subtitle = element_text(size = 20),
-    legend.text = element_text(margin = margin(r = 10), size = 14),
+    legend.text = element_text(margin = margin(r = 8)),
+    legend.margin = margin(t = 5)
   ) +
   guides(fill = guide_legend(nrow = 1))
 
-save_plot(fig_sd, here::here("export/choropleth_sd_co_cm_jobs.png"), chart_height = 8)
+save_plot(fig_sd, here::here("export/choropleth_sd_co_cm_jobs.png"), chart_height = 8.4)
 
 ```
 
@@ -182,16 +235,16 @@ fig_dist <- ggplot(chrt_dta, aes(x = pct_cm)) +
     expand = expansion(mult = c(0, 0))
   ) +
   scale_y_continuous(
-    expand = expansion(mult = c(0, 0))
+    expand = expansion(mult = c(0, 0.2))
   ) +
   labs(
-    title = "Computer and math employment distribution",
+    title = "Distribution of computer and math\nemployment shares",
     subtitle = "For Colorado counties",
     x = NULL,
     y = NULL,
     caption = "Source: 2021 ACS 5-year estimates"
   ) + 
-  theme_cori() +
+  theme_cori_presentation() +
   theme(
     panel.grid.major.y = element_line(color = "#d0d2ce", linetype = "solid", linewidth = .25)
   )

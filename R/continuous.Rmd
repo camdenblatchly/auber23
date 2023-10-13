@@ -55,9 +55,9 @@ fig <- chrt_dta %>%
     low = "#f7fbff", mid = "#6baed6", midpoint = 0.5, high = "#08306b", na.value = "#d0d2ce",
     labels = scales::percent_format(scale = 100)
   ) +
-  theme_cori_map() +
+  theme_cori_map_presentation() +
   theme(
-    legend.key.width = unit(30, "pt"),
+    legend.key.width = unit(60, "pt"),
     legend.margin = margin(t = 5)
   ) +
   labs(
@@ -66,6 +66,53 @@ fig <- chrt_dta %>%
     caption = "Source: 2022 FCC estimates"
   )
 
-save_plot(fig, here::here("export/choropleth_continuous_tr_bb.png"), chart_height = 8)
+save_plot(fig, here::here("export/choropleth_continuous_tr_bb.png"), chart_height = 8.4)
+
+```
+
+```{r}
+
+# Re-title for data normalization example
+
+fig_normalized <- fig + 
+  labs(
+    title = "Normalized"
+  )
+
+save_plot(fig_normalized, here::here("export/choropleth_normalized.png"), chart_height = 8.4)
+
+```
+
+
+```{r}
+
+
+co_border <- tigris::states(cb = TRUE, year = 2021) %>%
+  filter(STATEFP == "08")
+  
+fig_unnormalized <- chrt_dta %>%
+  ggplot() +
+  geom_sf(data = co_border, fill = NA, color = "dimgray", linewidth = 0.5) +
+  geom_sf(aes(fill = cnt_25_3), color = "dimgray", linewidth = 0.025) +
+  scale_fill_gradient2(
+    low = "#f7fbff", 
+    midpoint = max(chrt_dta$cnt_25_3, na.rm = TRUE)/2,
+    mid = "#6baed6",
+    high = "#08306b", 
+    na.value = "#d0d2ce",
+    labels = scales::number_format(scale = 1, scale_cut = scales::cut_short_scale())
+  ) +
+  theme_cori_map_presentation() +
+  theme(
+    legend.key.width = unit(60, "pt"),
+    legend.margin = margin(t = 5)
+  ) +
+  labs(
+    title = "Unnormalized",
+    subtitle = "Number of locations with 25/3 broadband service",
+    caption = "Source: 2022 FCC estimates"
+  )
+
+save_plot(fig_unnormalized, here::here("export/choropleth_unnormalized.png"), chart_height = 8.4)
 
 ```
