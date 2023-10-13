@@ -51,8 +51,8 @@ chrt_dta <- bb_tr %>%
 fig <- chrt_dta %>%
   ggplot() +
   geom_sf(aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
-  scale_fill_gradient2(
-    low = "#f7fbff", mid = "#6baed6", midpoint = 0.5, high = "#08306b", na.value = "#d0d2ce",
+ scale_fill_gradient2(
+    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
     labels = scales::percent_format(scale = 100)
   ) +
   theme_cori_map_presentation() +
@@ -94,11 +94,11 @@ fig_unnormalized <- chrt_dta %>%
   ggplot() +
   geom_sf(data = co_border, fill = NA, color = "dimgray", linewidth = 0.5) +
   geom_sf(aes(fill = cnt_25_3), color = "dimgray", linewidth = 0.025) +
-  scale_fill_gradient2(
-    low = "#f7fbff", 
+ scale_fill_gradient2(
+    low = "#FFF6D2", 
+    mid = "#F08250", 
     midpoint = max(chrt_dta$cnt_25_3, na.rm = TRUE)/2,
-    mid = "#6baed6",
-    high = "#08306b", 
+    high = "#890005", 
     na.value = "#d0d2ce",
     labels = scales::number_format(scale = 1, scale_cut = scales::cut_short_scale())
   ) +
