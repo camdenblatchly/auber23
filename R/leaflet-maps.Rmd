@@ -1,5 +1,5 @@
 ---
-title: "leaflet-choropleth"
+title: "leaflet-maps"
 output: html_document
 ---
 
@@ -9,7 +9,7 @@ library(dplyr)
 library(leaflet)
 library(sf.dotdensity)
 
-here::i_am("R/leaflet-choropleth.Rmd")
+here::i_am("R/leaflet-maps.Rmd")
 source(here::here("R/utils.R"))
 
 ```
@@ -22,6 +22,8 @@ acs_vars <- c(
   "cm_jobs" = "C24010_044"
 )
 
+# Calculate percent employment in computer and
+# math employment using tidycensus
 acs_dta <- tidycensus::get_acs(
     "county",
     variables = acs_vars,
@@ -36,6 +38,7 @@ acs_dta <- tidycensus::get_acs(
     pct_cm = cm_jobs / summary_est,
     geoid_st = stringr::str_sub(GEOID, 1, 2)
   ) %>%
+  # Remove territories, Hawaii, and Alaska
   filter(!geoid_st %in% c("02", "15")) %>%
   filter(geoid_st <= "56")
   
@@ -43,8 +46,9 @@ acs_dta <- tidycensus::get_acs(
 
 
 
-```{r, fig.width=7, fig.height=5}
+```{r}
 
+# Interactive choropleth map
 map_dta <- acs_dta %>%
   sf::st_as_sf() %>%
   sf::st_transform(crs = sf::st_crs("+proj=longlat +datum=WGS84"))
@@ -70,6 +74,8 @@ leaflet_map <- leaflet(map_dta) %>%
 
 
 ```{r}
+
+# Interactive dot density map
 
 bb_tr <- get_bb_tr(geo = TRUE, st = "08")
 
@@ -103,7 +109,6 @@ leaflet_map <- leaflet(unserved_dots) %>%
     fillColor = "#26535C",
     radius = 2.5,
     fillOpacity = 0.6
-    # popup = ~paste("State: ", State, "<br>City Count: ", CityCount)
   )
 
 leaflet_map

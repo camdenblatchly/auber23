@@ -62,6 +62,8 @@ chrt_dta <- tidycensus::get_acs(
 
 ```{r}
 
+# Centroid proportional symbol map
+
 chrt_dta_carto <- chrt_dta %>%
   sf::st_transform(crs = 3857) %>%
   cartogram_dorling(weight = "cm_jobs", k = 1)
@@ -93,6 +95,8 @@ save_plot(fig, here::here("export/proportional_sym_centroid_cm_jobs_co.png"), ch
 ```{r}
 
 cenpop_dta <- readr::read_csv(here::here("data/US_county_cenpop_2020.csv"))
+
+# Centers of Population proportional symbol map
 
 chrt_dta_cenpop <- left_join(
     chrt_dta %>% sf::st_drop_geometry(),

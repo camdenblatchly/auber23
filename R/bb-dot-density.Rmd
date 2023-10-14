@@ -47,10 +47,6 @@ tracts <- tigris::tracts(state = "08", cb = TRUE, year = 2021) %>%
   sf::st_as_sf() %>%
   sf::st_transform(crs = sf::st_crs(3857))
 
-counties <- tigris::counties(state = "08", cb = TRUE, year = 2021) %>%
-  sf::st_as_sf() %>%
-  sf::st_transform(crs = sf::st_crs(3857))
-
 unserved_dots <- bb_tr %>%
   mutate(
     cnt_unserved = cnt_total_locations - cnt_100_20
@@ -101,6 +97,10 @@ dots <- bind_rows(
 
 
 ```{r}
+
+counties <- tigris::counties(state = "08", cb = TRUE, year = 2021) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
 
 fig <- ggplot() +
   geom_sf(data = counties, linewidth = .1, fill = "#FFFFF9", color = "dimgray") +

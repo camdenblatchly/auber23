@@ -53,7 +53,7 @@ chrt_dta <- left_join(
   mutate(
     `Rurality` = ifelse(rural_cbsa_2019_flag == 0, "Nonrural", "Rural")
   ) %>%
-  filter(STATEFP == "08") %>%
+  filter(STATEFP == "08") %>% # Filter to Colorado
   sf::st_as_sf() %>%
   sf::st_transform(crs = sf::st_crs(3857))
 
@@ -73,7 +73,7 @@ nonrural_dta <- chrt_dta %>%
 fig <- ggplot() +
   geom_sf(data = rural_dta, aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
   scale_fill_gradient2(
-    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
+    low = "#FCF2EE", mid = "#BA578C", midpoint = 0.5, high = "#211448", na.value = "#d0d2ce",
     labels = scales::percent_format(scale = 100),
     name = "Rural",
     limits = c(0, 1)
@@ -114,17 +114,26 @@ save_plot(fig, here::here("export/choropleth-bad-two-scales.png"), chart_height 
 rurality_dta <- chrt_dta %>%
     mutate(
     `Rurality` = ifelse(rural_cbsa_2019_flag == 0, "Nonrural", "Rural")
-  )
+  ) %>%
+  sf::st_as_sf()
   
 rurality_dta$Rurality <- factor(rurality_dta$Rurality, levels = c("Rural", "Nonrural"))
 
-# Good map example
+co_counties <- tigris::counties(state = "08", cb = TRUE, year = NULL) %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(crs = sf::st_crs(3857))
+
+# Good map example (using facets for Rural and Nonrural)
 fig <- rurality_dta %>%
   ggplot() +
-  geom_sf(data = chrt_dta, fill = "#d0d2ce", color = "#d0d2ce", linewidth = 0.01) +
+  geom_sf(data = co_counties, fill = "#d0d2ce", color = "#d0d2ce", linewidth = 0.01) +
   geom_sf(aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
   scale_fill_gradient2(
-    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
+    low = "#FCF2EE",
+    mid = "#BA578C",
+    midpoint = 0.5,
+    high = "#211448",
+    na.value = "#d0d2ce",
     labels = scales::percent_format(scale = 100),
     limits = c(0, 1)
   ) +
@@ -154,8 +163,11 @@ fig <- chrt_dta %>%
   geom_sf(data = chrt_dta, fill = "#d0d2ce", color = "#d0d2ce", linewidth = 0.01) +
   geom_sf(aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
   scale_fill_gradient2(
-    low = "#E74F2A", mid = "#FBF8E9", midpoint = mean(chrt_dta$pct_25_3_loc, na.rm = TRUE), high = "#00835D", na.value = "#d0d2ce",
-    # labels = scales::percent_format(scale = 100),
+    low = "#E74F2A", 
+    mid = "#FBF8E9", 
+    midpoint = mean(chrt_dta$pct_25_3_loc, na.rm = TRUE), 
+    high = "#00835D", 
+    na.value = "#d0d2ce",
     limits = c(0, 1),
     breaks = c(0, mean(chrt_dta$pct_25_3_loc, na.rm = TRUE), 1),
     labels = c("0%", "Average", "100%")
@@ -163,8 +175,7 @@ fig <- chrt_dta %>%
   theme_cori_map_presentation() +
   theme(
     legend.key.width = unit(60, "pt"),
-    legend.margin = margin(t = 5),
-    # strip.text = element_text(family = "Lato", color = 'black', size = 16)
+    legend.margin = margin(t = 5)
   ) +
   labs(
     title = "Diverging scale using an average",
@@ -181,7 +192,7 @@ save_plot(fig, here::here("export/choropleth-good-diverging.png"), chart_height 
 
 ```{r}
 
-# How to display rural
+# How to label rural (simple example)
 fig <- ggplot() +
   geom_sf(data = nonrural_dta, aes(fill = `Rurality`), color = "#d0d2ce", linewidth = 0.01) +
   scale_fill_manual(
@@ -190,7 +201,7 @@ fig <- ggplot() +
   ggnewscale::new_scale("fill") +
   geom_sf(data = rural_dta, aes(fill = pct_25_3_loc), color = "#d0d2ce", linewidth = 0.01) +
   scale_fill_gradient2(
-    low = "#FFF6D2", mid = "#F08250", midpoint = 0.5, high = "#890005", na.value = "#d0d2ce",
+    low = "#FCF2EE", mid = "#BA578C", midpoint = 0.5, high = "#211448", na.value = "#d0d2ce",
     labels = scales::percent_format(scale = 100),
     limits = c(0, 1)
   ) +

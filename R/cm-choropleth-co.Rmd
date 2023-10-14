@@ -1,5 +1,5 @@
 ---
-title: "cs-choropleth-co"
+title: "cm-choropleth-co"
 output: html_document
 ---
 
@@ -33,6 +33,8 @@ source(here::here("R/utils.R"))
 
 ```{r}
 
+# Pull computer and math employment from tidycensus
+
 # sum_var = "C24010_001"
 acs_vars <- c(
   "cm_jobs" = "C24010_008",
@@ -62,6 +64,8 @@ chrt_dta <- tidycensus::get_acs(
 
 ```{r}
 
+# Jenks choropleth
+
 breaks <- chrt_dta %>%
   pull(pct_cm) %>%
   classIntervals(
@@ -90,7 +94,7 @@ save_plot(fig_jenks, here::here("export/choropleth_jenks_co_cm_jobs.png"), chart
 
 ```{r}
 
-# Make a distribution chart for Jenks
+# Make a distribution chart for the Jenks classification
 
 scale_dta <- chrt_dta %>%
   mutate(
@@ -145,6 +149,8 @@ save_plot(fig_jenks_dist, here::here("export/jenks_dist_cm_jobs_co.png"), add_lo
 
 ```{r}
 
+# Equal classification choropleth
+
 breaks <- chrt_dta %>%
   pull(pct_cm) %>%
   classIntervals(
@@ -172,6 +178,8 @@ save_plot(fig_equal, here::here("export/choropleth_equal_co_cm_jobs.png"), chart
 
 ```{r}
 
+# Quantile classification choropleth
+
 breaks <- chrt_dta %>%
   pull(pct_cm) %>%
   classIntervals(
@@ -198,6 +206,8 @@ save_plot(fig_quantile, here::here("export/choropleth_quantile_co_cm_jobs.png"),
 ```
 
 ```{r}
+
+# Standard deviation classification choropleth
 
 breaks <- chrt_dta %>%
   pull(pct_cm) %>%
@@ -227,7 +237,8 @@ save_plot(fig_sd, here::here("export/choropleth_sd_co_cm_jobs.png"), chart_heigh
 
 ```{r}
 
-# Create a histogram
+# Histogram of CO county computer and math employment shares
+
 fig_dist <- ggplot(chrt_dta, aes(x = pct_cm)) +
   geom_histogram(binwidth = .01, fill = "#00835D", color = "black") +
   scale_x_continuous(

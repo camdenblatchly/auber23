@@ -1,5 +1,5 @@
 ---
-title: "rural-pop-comparison"
+title: "cartogram-rural-pop-comparison"
 output: html_document
 ---
 
@@ -27,7 +27,7 @@ font_add(
 showtext_auto()
 showtext_opts(dpi = 300)
 
-here::i_am("R/rural-pop-comparison.Rmd")
+here::i_am("R/cartogram-rural-pop-comparison.Rmd")
 source(here::here("R/utils.R"))
 
 ```
@@ -37,6 +37,7 @@ source(here::here("R/utils.R"))
 
 # v21 <- tidycensus::load_variables(2021, "acs5")
 
+# Pull population by county
 acs_dta <- tidycensus::get_acs(
   "county",
   variables = "B01003_001",
@@ -48,13 +49,16 @@ acs_dta <- tidycensus::get_acs(
 
 ```{r}
 
-con <- connect_to_db("core_data")
-def <- read_db(con, "rural_definitions_county_2020")
+# Load rural definition
+rural_def <- readr::read_csv(here::here("data/cori_rural_definition.csv")) %>%
+  select(geoid_co, rural_cbsa_2019_flag) %>%
+  distinct()
 
+# Calculate rural population by state
 chrt_dta <- left_join(
     acs_dta,
-    def,
-    by = c("GEOID" = "geoid")
+    rural_def,
+    by = c("GEOID" = "geoid_co")
   ) %>%
   mutate(
     geoid_st = stringr::str_sub(GEOID, 1, 2),
@@ -83,6 +87,9 @@ chrt_dta <- left_join(
 
 ```{r}
 
+# Choropleth
+# Percent rural fill
+
 fig <- chrt_dta %>%
   sf::st_transform(crs = 5070) %>%
   ggplot() +
@@ -108,6 +115,9 @@ save_plot(fig, here::here("export/choropleth_pct_rural_pop.png"), chart_height =
 
 
 ```{r}
+
+# Choropleth
+# Rural population fill
 
 fig2 <- chrt_dta %>%
   sf::st_transform(crs = 5070) %>%
@@ -136,6 +146,10 @@ save_plot(fig2, here::here("export/choropleth_rural_pop.png"), chart_height = 8)
 
 ```{r}
 
+# Contiguous cartogram
+# Geographies sized by total state population
+# Percent rural fill
+
 chrt_dta_carto <- chrt_dta %>%
   sf::st_transform(crs = 5070) %>%
   cartogram_cont("tot_pop", itermax = 5)
@@ -160,37 +174,19 @@ fig3 <- chrt_dta_carto %>%
 
 save_plot(fig3, here::here("export/cartogram_rural_pop.png"), chart_height = 8)
 
-
 ```
 
 ```{r}
+
+# Noncontiguous cartogram
+# Geographies sized by rural state population
+# Percent rural fill
 
 chrt_dta_carto <- chrt_dta %>%
   sf::st_transform(crs = 5070) %>%
   cartogram_ncont(weight = "rural_pop", k = 0.3, inplace = FALSE)
 
 fig4 <- chrt_dta_carto %>%
-  ggplot() +
-  geom_sf(aes(fill = rural_pop), color = "#d0d2ce", linewidth = 0.1) +
-  scale_fill_gradient2(
-    low = "#f7fbff", high = "#08306b", na.value = "#d0d2ce",
-    labels = scales::number_format(scale = 1, scale_cut = scales::cut_short_scale())
-  ) +
-  theme_cori_map_presentation() +
-  theme(
-    legend.key.width = unit(60, "pt"),
-    legend.margin = margin(t = 5)
-  ) +
-  labs(
-    title = "Rural population by state",
-    subtitle = "Non-contiguous cartogram, sized by state rural population",
-    caption = "Source: 2021 ACS 5-year estimates"
-  )
-
-save_plot(fig4, here::here("export/cartogram_ncont_rural_pop.png"), chart_height = 8)
-
-
-fig5 <- chrt_dta_carto %>%
   ggplot() +
   geom_sf(aes(fill = pct_rural), color = "#d0d2ce", linewidth = 0.1) +
   scale_fill_gradient2(
@@ -208,7 +204,7 @@ fig5 <- chrt_dta_carto %>%
     caption = "Source: 2021 ACS 5-year estimates"
   )
 
-save_plot(fig5, here::here("export/cartogram_ncont_pct_rural_pop.png"), chart_height = 8)
+save_plot(fig4, here::here("export/cartogram_ncont_pct_rural_pop.png"), chart_height = 8)
 
 
 ```
@@ -216,11 +212,13 @@ save_plot(fig5, here::here("export/cartogram_ncont_pct_rural_pop.png"), chart_he
 
 ```{r}
 
+# Bubble map or Dorling cartogram
+
 chrt_dta_carto <- chrt_dta %>%
   sf::st_transform(crs = 5070) %>%
   cartogram_dorling(weight = "rural_pop", k = 1)
 
-fig6 <- chrt_dta_carto %>%
+fig5 <- chrt_dta_carto %>%
   ggplot() +
   geom_sf(data = chrt_dta, color = "#d0d2ce", linewidth = 0.5, fill = NA) +
   geom_sf(aes(fill = pct_rural), color = "black", linewidth = 0.5, alpha = .75) +
@@ -239,7 +237,7 @@ fig6 <- chrt_dta_carto %>%
     caption = "Source: 2021 ACS 5-year estimates"
   )
 
-save_plot(fig6, here::here("export/cartogram_dorling_rural_pop.png"), chart_height = 8)
+save_plot(fig5, here::here("export/cartogram_dorling_rural_pop.png"), chart_height = 8)
 
 ```
 
