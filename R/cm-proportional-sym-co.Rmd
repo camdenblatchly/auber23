@@ -74,7 +74,8 @@ fig <- chrt_dta_carto %>%
   geom_sf(aes(fill = pct_cm), color = "black", linewidth = 0.0, alpha = .75) +
   scale_fill_gradient2(
     low = "#f7fbff", high = "#08306b", na.value = "#d0d2ce",
-    labels = scales::percent_format(scale = 100)
+    labels = scales::percent_format(scale = 100),
+    limits = c(0, NA)
   ) +
   theme_cori_map_presentation() +
   theme(
